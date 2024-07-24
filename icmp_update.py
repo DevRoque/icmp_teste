@@ -27,8 +27,9 @@ def check_ping(response: int) -> bool:
             ping_value = False
             return ping_value
 
-def created_list_icmp(list_host: List[str]) -> List[bool]:
-    for host in list_host:
+def created_list_icmp(list_hosts: List) -> List[bool]:
+    print(list_hosts)
+    for host in list_hosts:
         try:
             if sys.platform.startswith('win'):
                 command = ("ping -n 1 " + host)
@@ -46,23 +47,21 @@ def created_list_icmp(list_host: List[str]) -> List[bool]:
 def update_values(host_connection: pymysql.connections.Connection, table: str, values: List[bool]) -> None:
         with host_connection.cursor() as cursor:
             for index ,value in enumerate(values):
-                print()
                 cursor.execute(
                     f'UPDATE {table} '
                     f'SET icmp={value} '
                     f'WHERE id={index + 1}'
-                )
+                    )
                 host_connection.commit()
 
 
 if __name__ == '__main__':  
     TABLE_NAME = 'anp'
     icmp_value: List[None] = []
-
-    hostname = [["google.com"], ["cloudflare.com"], ["yahoo.com"], ["facebook.com"]]
+    list_hostnames: List = [["google.co33m"], ["cloudflare.com"], ["yahoo.co33m"], ["facebook.com"]]
 
     while True:
-        for host in hostname:
+        for host in list_hostnames:
             icmp_value.append(created_list_icmp(host))
         print(icmp_value)
 
