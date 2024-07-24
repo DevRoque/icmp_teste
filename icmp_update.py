@@ -5,9 +5,8 @@ import dotenv
 from time import sleep
 from typing import List
 
-# SEMPRE QUE UMA FUNÇÃO FOR CHAMADA SERÁ ENCERRADO A CONEXÃO.
-def connection_mysql() -> pymysql.connect:
-    # CARREGANDO AS VARIAVEIS DE AMBIENTE
+
+def connection_mysql() -> pymysql.connections.Connection:
     dotenv.load_dotenv()
 
     connection = pymysql.connect(
@@ -19,37 +18,32 @@ def connection_mysql() -> pymysql.connect:
     return connection
 
 
-def chack_ping(response: int) -> bool:
-        # PARA CADA HOST QUE ESTIVER NA LISTA VAI FAZER A VERIFICAÇÃO DA CONEXÃO
+def check_ping(response: int) -> bool:
         if response == 0:
-            # CONEXÃO ONLINE
             ping_value = True
             return ping_value
 
         else:
-            # CONEXÃO OFFILINE
             ping_value = False
             return ping_value
 
-
-def created_list_icmp(list_host: List) -> List:
+def created_list_icmp(list_host: List[str]) -> List[bool]:
     for host in list_host:
         try:
             if sys.platform.startswith('win'):
                 command = ("ping -n 1 " + host)
                 response = os.system(command)
-                ping_check = chack_ping(response)
+                ping_check = check_ping(response)
                 return ping_check
             else:
                 command = ("ping -c 1 " + host)
                 response = os.system(command)
-                ping_check = chack_ping(response)
+                ping_check = check_ping(response)
                 return ping_check
-        except: ...
+        except Exception as e:
+            print(f'Erro ao Verificar o host {host}: {e}')
 
-
-def update_values(host_connection: pymysql.connect, table: str, values: List) -> None:
-    with host_connection:
+def update_values(host_connection: pymysql.connections.Connection, table: str, values: List[bool]) -> None:
         with host_connection.cursor() as cursor:
             for index ,value in enumerate(values):
                 print()
@@ -63,21 +57,17 @@ def update_values(host_connection: pymysql.connect, table: str, values: List) ->
 
 if __name__ == '__main__':  
     TABLE_NAME = 'anp'
-    icmp_value: List = []
-    
-    # ALTERE PARA OS IPS HOSTS
+    icmp_value: List[None] = []
+
     hostname = [["google.com"], ["cloudflare.com"], ["yahoo.com"], ["facebook.com"]]
 
-    for host in hostname:
-        icmp_value.append(created_list_icmp(host))
-    print(icmp_value)
+    while True:
+        for host in hostname:
+            icmp_value.append(created_list_icmp(host))
+        print(icmp_value)
 
-    # ALTERAR PELOS DADOS DA TABELA DO MYSQL ORIGINAL
+        connection_update = connection_mysql()
+        update_values(connection_update, TABLE_NAME, icmp_value)
 
-
-    # ATUALIZA A COLUNA ICMP
-    connection_update = connection_mysql()
-    update_values(connection_update, TABLE_NAME, icmp_value)
-
-    # Executa o código novamente após 5 minutos
+        sleep(300)
 
